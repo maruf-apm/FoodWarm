@@ -1,4 +1,5 @@
 """ViT-based image classifier with PEFT support."""
+
 from typing import Dict, Any, Optional
 
 import torch
@@ -50,21 +51,31 @@ class ViTClassifier(pl.LightningModule):
         # Metrics
         self.train_acc = Accuracy(task="multiclass", num_classes=num_classes, top_k=1)
         self.val_acc = Accuracy(task="multiclass", num_classes=num_classes, top_k=1)
-        self.val_acc_top5 = Accuracy(task="multiclass", num_classes=num_classes, top_k=5)
-        self.val_f1 = F1Score(task="multiclass", num_classes=num_classes, average="macro")
-        self.val_precision = Precision(task="multiclass", num_classes=num_classes, average="macro")
-        self.val_recall = Recall(task="multiclass", num_classes=num_classes, average="macro")
+        self.val_acc_top5 = Accuracy(
+            task="multiclass", num_classes=num_classes, top_k=5
+        )
+        self.val_f1 = F1Score(
+            task="multiclass", num_classes=num_classes, average="macro"
+        )
+        self.val_precision = Precision(
+            task="multiclass", num_classes=num_classes, average="macro"
+        )
+        self.val_recall = Recall(
+            task="multiclass", num_classes=num_classes, average="macro"
+        )
 
         # Loss
         self.criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
         # Log parameter stats
         param_stats = get_trainable_parameters(self.model)
-        self.log_dict({
-            "params/total": float(param_stats["total"]),
-            "params/trainable": float(param_stats["trainable"]),
-            "params/trainable_pct": param_stats["trainable_pct"],
-        })
+        self.log_dict(
+            {
+                "params/total": float(param_stats["total"]),
+                "params/trainable": float(param_stats["trainable"]),
+                "params/trainable_pct": param_stats["trainable_pct"],
+            }
+        )
 
     def _apply_peft(self):
         """Apply the selected PEFT method."""
@@ -105,11 +116,19 @@ class ViTClassifier(pl.LightningModule):
         preds = torch.argmax(logits, dim=1)
         acc = self.train_acc(preds, labels)
 
-        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log("train/acc", acc, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log(
+            "train/loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True
+        )
+        self.log(
+            "train/acc", acc, on_step=True, on_epoch=True, prog_bar=True, logger=True
+        )
 
         # Log LR safely
-        current_lr = self.trainer.optimizers[0].param_groups[0]["lr"] if self.trainer.optimizers else self.config.lr
+        current_lr = (
+            self.trainer.optimizers[0].param_groups[0]["lr"]
+            if self.trainer.optimizers
+            else self.config.lr
+        )
         self.log("train/lr", current_lr, on_step=True, logger=True)
 
         return loss
@@ -127,15 +146,21 @@ class ViTClassifier(pl.LightningModule):
         self.val_precision.update(preds, labels)
         self.val_recall.update(preds, labels)
 
-        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log(
+            "val/loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
+        )
         return loss
 
     def on_validation_epoch_end(self):
         """Compute and log validation metrics at epoch end."""
         self.log("val/acc", self.val_acc.compute(), prog_bar=True, logger=True)
-        self.log("val/acc_top5", self.val_acc_top5.compute(), prog_bar=True, logger=True)
+        self.log(
+            "val/acc_top5", self.val_acc_top5.compute(), prog_bar=True, logger=True
+        )
         self.log("val/f1", self.val_f1.compute(), prog_bar=True, logger=True)
-        self.log("val/precision", self.val_precision.compute(), prog_bar=True, logger=True)
+        self.log(
+            "val/precision", self.val_precision.compute(), prog_bar=True, logger=True
+        )
         self.log("val/recall", self.val_recall.compute(), prog_bar=True, logger=True)
 
         self.val_acc.reset()
@@ -153,7 +178,9 @@ class ViTClassifier(pl.LightningModule):
         preds = torch.argmax(logits, dim=1)
         self.val_acc.update(preds, labels)
 
-        self.log("test/loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        self.log(
+            "test/loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True
+        )
         return loss
 
     def on_test_epoch_end(self):

@@ -1,0 +1,49 @@
+data:
+  dataset_name: "food101"
+  data_dir: "./data"
+  batch_size: 32
+  num_workers: 0
+  image_size: 224
+  pin_memory: false
+  persistent_workers: false
+
+model:
+  model_name: "google/vit-base-patch16-224"
+  num_classes: 101
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.0
+  peft_method: "lora"
+  lora_r: 8
+  lora_alpha: 16
+  lora_dropout: 0.05
+  lora_target_modules:
+    - "query"
+    - "value"
+  linear_probe_layers:
+    - "classifier"
+
+training:
+  max_epochs: 30
+  lr: 0.0001
+  weight_decay: 0.01
+  warmup_steps: 500
+  scheduler: "cosine"
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 2
+  precision: "16-mixed"
+  accelerator: "gpu"
+  devices: 1
+  seed: 42
+  early_stopping_patience: 7
+  save_top_k: 2
+  monitor_metric: "val/acc"
+  monitor_mode: "max"
+
+logging:
+  project_name: "foodwarm"
+  experiment_name: "vit-food101-lora-colab-fast"
+  log_dir: "./outputs/logs"
+  checkpoint_dir: "./outputs/checkpoints/colab"
+  use_wandb: false
+  wandb_entity: null
+  log_every_n_steps: 50
