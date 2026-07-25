@@ -1,8 +1,7 @@
 data:
   dataset_name: "food101"
   data_dir: "./data"
-  batch_size: 512
-  accumulate_grad_batches: 4
+  batch_size: 32
   num_workers: 0
   image_size: 224
   pin_memory: false
